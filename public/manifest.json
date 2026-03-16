@@ -1,0 +1,16 @@
+{
+  "name": "Secure Voting System",
+  "short_name": "VoteSecure",
+  "description": "Kiosk-mode student government voting system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#800020",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
