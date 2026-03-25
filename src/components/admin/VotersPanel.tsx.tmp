@@ -1,0 +1,232 @@
+import { useState, useEffect, type FormEvent } from "react";
+import { supabase } from "../../lib/supabase";
+import { ADMIN_SESSION_KEY } from "../../App";
+import type { Student } from "../../lib/types";
+import { addAuditEntry } from "../../utils/auditLog";
+
+export function VotersPanel() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [filtered, setFiltered] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [votedFilter, setVotedFilter] = useState("all");
+  const [resetConfirm, setResetConfirm] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importTotal, setImportTotal] = useState(0);
+  const [importResults, setImportResults] = useState<{ success: number; duplicates: number; failed: number } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const adminEmail = sessionStorage.getItem(ADMIN_SESSION_KEY) ?? "";
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from("students")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (err) setError(err.message);
+    else {
+      setStudents(data ?? []);
+      setFiltered(data ?? []);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    let result = students;
+    const q = search.toLowerCase().trim();
+    if (q) {
+      result = result.filter(s => 
+        s.full_name.toLowerCase().includes(q) || 
+        (s.email ?? "").toLowerCase().includes(q)
+      );
+    }
+    if (votedFilter === "voted") {
+      result = result.filter(s => s.has_voted);
+    } else if (votedFilter === "not-voted") {
+      result = result.filter(s => !s.has_voted);
+    }
+    setFiltered(result);
+  }, [search, students, votedFilter]);
+
+  async function handleResetVote(id: string, name: string) {
+    setSaving(true);
+    const { error: err } = await supabase.rpc("admin_reset_voter", {
+      p_admin_email: adminEmail,
+      p_student_id: id,
+    });
+    if (err) setError(err.message);
+    setResetConfirm(null);
+    setSaving(false);
+    await load();
+    addAuditEntry(adminEmail, "Reset vote for", name);
+  }
+
+  async function handleAddVoter(e: FormEvent) {
+    e.preventDefault();
+    setAddError(null);
+    
+    if (!newName.trim()) { setAddError("Name required"); return; }
+    if (!newEmail.trim()) { setAddError("Email required"); return; }
+    if (!newPassword || newPassword.length < 6) { setAddError("Password min 6 chars"); return; }
+    
+    setAdding(true);
+    try {
+      const { error: rpcError } = await supabase.rpc("student_register", {
+        p_full_name: newName.trim(),
+        p_email: newEmail.trim().toLowerCase(),
+        p_password: newPassword,
+      });
+
+      if (rpcError) {
+        if (rpcError.message.includes("unique") || rpcError.message.includes("duplicate")) {
+          setAddError("Email already exists");
+        } else {
+          setAddError(rpcError.message);
+        }
+        return;
+      }
+
+      setShowAdd(false);
+      setNewName("");
+      setNewEmail("");
+      setNewPassword("");
+      await load();
+      addAuditEntry(adminEmail, "Added voter", newName.trim());
+    } catch {
+      setAddError("Failed to add voter");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".csv")) {
+      setImportError("Please select a .csv file.");
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+    setImportResults(null);
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      
+      const startIndex = lines[0]?.toLowerCase().includes("name") || lines[0]?.toLowerCase().includes("email") ? 1 : 0;
+      const rows = lines.slice(startIndex);
+
+      setImportTotal(rows.length);
+      let success = 0, duplicates = 0, failed = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        const cols = rows[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+        if (cols.length < 3 || !cols[0] || !cols[1] || !cols[2]) {
+          failed++;
+          setImportProgress(i + 1);
+          continue;
+        }
+
+        const [fullName, email, password] = cols;
+
+        if (password.length < 8) {
+          failed++;
+          setImportProgress(i + 1);
+          continue;
+        }
+
+        try {
+          const { error: rpcError } = await supabase.rpc("student_register", {
+            p_full_name: fullName,
+            p_email: email,
+            p_password: password,
+          });
+
+          if (rpcError) {
+            if (rpcError.message.includes("unique") || rpcError.message.includes("duplicate")) {
+              duplicates++;
+            } else {
+              failed++;
+            }
+          } else {
+            success++;
+          }
+        } catch {
+          failed++;
+        }
+
+        setImportProgress(i + 1);
+      }
+
+      setImportResults({ success, duplicates, failed });
+      await load();
+      addAuditEntry(adminEmail, "CSV import", `${success} added, ${duplicates} duplicates, ${failed} failed`);
+    } catch {
+      setImportError("Failed to read CSV file.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function handleExportPdf() {
+    const exportData = filtered.length > 0 ? filtered : students;
+    const rows = exportData.map(s => 
+      `<tr style="border-bottom:1px solid #e5e7eb">
+        <td style="padding:8px 16px">${s.full_name}</td>
+        <td style="padding:8px 16px">${s.email ?? '—'}</td>
+        <td style="padding:8px 16px">${s.has_voted ? 'Yes' : 'No'}</td>
+      </tr>`
+    ).join('');
+
+    const html = `<!DOCTYPE html>
+<html><head><title>Voters Report</title>
+<style>body{font-family:system-ui,sans-serif;padding:40px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 16px;border-bottom:2px solid #18181b;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#71717a}td{font-size:14px;color:#18181b}</style>
+</head><body>
+<h1 style="font-size:20px;margin-bottom:4px">Voters Report</h1>
+<p style="color:#71717a;font-size:14px;margin-bottom:24px">Generated ${new Date().toLocaleString()} · ${exportData.length} voters · ${exportData.filter(s => s.has_voted).length} voted</p>
+<table><thead><tr><th>Name</th><th>Email</th><th>Voted</th></tr></thead><tbody>${rows}</tbody></table>
+</body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  }
+
+  const votedCount = students.filter(s => s.has_voted).length;
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900 py-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Voters</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Manage voter accounts and track participation
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-48 rounded-lg border 

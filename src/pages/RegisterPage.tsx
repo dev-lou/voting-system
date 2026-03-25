@@ -69,7 +69,7 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
   }
 
   const inputClasses =
-    "w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors duration-150 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-100 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-900/50";
+    "w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20";
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">

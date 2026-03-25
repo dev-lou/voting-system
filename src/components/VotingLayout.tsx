@@ -4,6 +4,8 @@ import { NetworkBadge } from "./NetworkBadge";
 import { OfflineOverlay } from "./OfflineOverlay";
 import { ReviewModal } from "./ReviewModal";
 import { ThemeToggle } from "./ThemeToggle";
+import { useBallotStore } from "../stores/ballotStore";
+import { sounds } from "../utils/sounds";
 import type { PositionWithCandidates } from "../lib/types";
 
 interface VotingLayoutProps {
@@ -13,12 +15,14 @@ interface VotingLayoutProps {
   userEmail?: string;
   isSubmitting: boolean;
   onSubmit: () => void;
+  abstainedPositions?: Set<string>;
+  onAbstain?: (positionId: string) => void;
 }
 
 /**
- * Desktop app shell for the student voting view.
- * Fixed viewport, panel-based layout.
- * Title bar + content + overlays.
+ * 2026 Desktop app shell for the student voting view.
+ * Features ambient background orbs, deep glassmorphism via .glass-panel,
+ * and high-fidelity hover states.
  */
 export function VotingLayout({
   positions,
@@ -27,66 +31,162 @@ export function VotingLayout({
   userEmail,
   isSubmitting,
   onSubmit,
+  abstainedPositions,
+  onAbstain,
 }: VotingLayoutProps) {
   const time = useSystemClock();
+  const activeIndex = useBallotStore((s) => s.activePositionIndex);
+  const setActiveIndex = useBallotStore((s) => s.setActivePositionIndex);
+  const getSelectionCount = useBallotStore((s) => s.getSelectionCount);
+
+  const handlePositionClick = (index: number) => {
+    sounds.playClick();
+    setActiveIndex(index);
+  };
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">
-      {/* ─── Title Bar ─── */}
-      <header className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-4 text-xs dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Left: Branding + clock */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-sm bg-maroon-700" />
-            <span className="font-semibold tracking-tight text-zinc-800 dark:text-zinc-200">
-              VOTE
+    <div className="relative flex h-screen w-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 font-sans selection:bg-maroon-500/30">
+      {/* ─── Ambient Background Orbs ─── */}
+      <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[40vw] w-[40vw] rounded-full bg-maroon-400/10 blur-[120px] dark:bg-maroon-600/20 mix-blend-multiply dark:mix-blend-screen" />
+      <div className="pointer-events-none absolute -bottom-[10%] -right-[5%] h-[50vw] w-[50vw] rounded-full bg-gold-400/10 blur-[150px] dark:bg-maroon-900/30 mix-blend-multiply dark:mix-blend-screen" />
+
+      {/* ─── App Container ─── */}
+      <div className="z-10 flex h-full w-full flex-col overflow-hidden">
+        {/* ─── Native App Title Bar (Glass) ─── */}
+        <header className="relative z-30 flex h-12 shrink-0 items-center justify-between glass-panel rounded-none border-t-0 border-x-0 border-b-white/50 px-5 text-sm dark:border-b-white/5 [-webkit-app-region:drag]">
+          {/* Left: Branding + Clock */}
+          <div className="flex items-center gap-4 [-webkit-app-region:no-drag]">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-maroon-500 to-maroon-700 text-[10px] font-bold text-white shadow-md glow-maroon">
+                V
+              </div>
+              <span className="font-bold tracking-wider text-zinc-900 dark:text-zinc-50">
+                VOTE 2026
+              </span>
+            </div>
+            <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+            <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 font-medium">
+              {time}
             </span>
           </div>
-          <span className="text-zinc-300 dark:text-zinc-700">|</span>
-          <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500">
-            {time}
-          </span>
-        </div>
 
-        {/* Center: Election name + secure indicator */}
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-          <span className="font-medium text-zinc-600 dark:text-zinc-400">
-            {electionName}
-          </span>
-          <span className="text-zinc-300 dark:text-zinc-700">·</span>
-          <span className="text-zinc-400 dark:text-zinc-500">
-            Secure Session
-          </span>
-        </div>
+          {/* Center: Election Name */}
+          <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5">
+            <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)] animate-pulse-dot" />
+            <span className="font-semibold tracking-tight text-zinc-800 dark:text-zinc-200">
+              {electionName}
+            </span>
+          </div>
 
-        {/* Right: Controls */}
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <span className="text-zinc-300 dark:text-zinc-700">|</span>
-          <NetworkBadge isOnline={isOnline} />
-          {userEmail && (
-            <>
-              <span className="text-zinc-300 dark:text-zinc-700">|</span>
-              <span className="font-mono text-zinc-500 dark:text-zinc-400">
-                {userEmail}
+          {/* Right: Controls & macOS Windows */}
+          <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
+            {userEmail && (
+              <>
+                <span className="font-mono text-zinc-500 dark:text-zinc-400 font-medium bg-zinc-100 dark:bg-zinc-800/50 px-2 py-0.5 rounded-md">
+                  {userEmail}
+                </span>
+                <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+              </>
+            )}
+            <NetworkBadge isOnline={isOnline} />
+            <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+            <ThemeToggle />
+            <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+            {/* macOS-style window controls - Premium Hover */}
+            <div className="group flex items-center gap-2 ml-1">
+              <button aria-label="Minimize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-yellow-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
+                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+              </button>
+              <button aria-label="Maximize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-green-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
+                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+              </button>
+              <button aria-label="Close" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-red-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
+                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* ─── Main Content Area (Sidebar + Pane) ─── */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Sidebar (Glass) */}
+          <aside className="relative z-20 flex w-[280px] shrink-0 flex-col glass-panel rounded-none border-y-0 border-l-0 border-r-white/50 dark:border-r-white/5 bg-white/40 dark:bg-zinc-900/30">
+            <div className="px-5 py-5 pb-2">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                Ballot Sections
               </span>
-            </>
-          )}
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 pb-6 pt-2 scrollbar-thin">
+              <div className="flex flex-col gap-1.5">
+                {positions.map((pos, idx) => {
+                  const isActive = idx === activeIndex;
+                  const count = getSelectionCount(pos.id);
+                  const isComplete = count > 0;
+                  const isAbstained = abstainedPositions?.has(pos.id) ?? false;
+
+                  return (
+                    <button
+                      key={pos.id}
+                      onClick={() => handlePositionClick(idx)}
+                      disabled={!isOnline}
+                      aria-label={`Select ${pos.title}`}
+                      className={`
+                        group relative flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-left text-[14px] font-medium transition-all duration-300 min-h-[52px]
+                        ${isActive
+                          ? "bg-white/90 text-zinc-900 shadow-sm glass-panel dark:bg-zinc-800/80 dark:text-zinc-50 ring-1 ring-maroon-500/20 glow-maroon border-transparent"
+                          : "text-zinc-600 hover:bg-white/50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-200 border border-transparent"
+                        }
+                        ${!isOnline ? "cursor-not-allowed opacity-50" : "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maroon-500"}
+                      `}
+                    >
+                      {/* Active Indicator Bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1/2 w-1 bg-maroon-500 rounded-r-full shadow-[0_0_8px_var(--color-maroon-500)]" />
+                      )}
+
+                      <span className="truncate pr-3 flex-1">{pos.title}</span>
+                      
+                      {/* Status Icon */}
+                      <div className="shrink-0 flex items-center justify-end w-5">
+                        {isComplete ? (
+                          <div className={`flex h-5 w-5 items-center justify-center rounded-full shadow-inner ${isActive ? 'bg-maroon-600 text-white dark:bg-maroon-500 shadow-[0_0_10px_var(--color-maroon-500)]' : 'bg-maroon-100 text-maroon-600 dark:bg-maroon-900/40 dark:text-maroon-400'}`}>
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                          </div>
+                        ) : isAbstained ? (
+                          <div className={`flex h-5 w-5 items-center justify-center rounded-full ${isActive ? 'bg-zinc-400 text-white dark:bg-zinc-500 shadow-[0_0_10px_var(--color-zinc-400)]' : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'}`}>
+                            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className={`h-2 w-2 rounded-full transition-colors ${isActive ? 'bg-gold-400 shadow-[0_0_8px_var(--color-gold-400)]' : 'bg-zinc-300 dark:bg-zinc-700'}`} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+
+          {/* Center Canvas (Transparent to show orbs) */}
+          <main className="relative z-10 flex flex-1 flex-col overflow-hidden bg-transparent">
+            <BallotPane positions={positions} isOnline={isOnline} abstainedPositions={abstainedPositions} onAbstain={onAbstain} />
+          </main>
         </div>
-      </header>
 
-      {/* ─── Content ─── */}
-      <BallotPane positions={positions} isOnline={isOnline} />
-
-      {/* ─── Overlays ─── */}
-      <OfflineOverlay isOnline={isOnline} />
-      <ReviewModal
-        positions={positions}
-        isOnline={isOnline}
-        isSubmitting={isSubmitting}
-        onSubmit={onSubmit}
-      />
+        {/* ─── Overlays ─── */}
+        <OfflineOverlay isOnline={isOnline} />
+        <ReviewModal
+          positions={positions}
+          isOnline={isOnline}
+          isSubmitting={isSubmitting}
+          onSubmit={onSubmit}
+          abstainedPositions={abstainedPositions}
+        />
+      </div>
     </div>
   );
 }

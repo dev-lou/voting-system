@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import type { Election, ResultRow } from "../../lib/types";
-import { CustomSelect } from "../CustomSelect";
 
 interface PositionResult {
   position_id: string;
@@ -113,13 +112,19 @@ export function ResultsPanel() {
           </p>
         </div>
         {!loadingElections && (
-          <div className="w-64 relative z-40">
-            <CustomSelect
+          <div className="relative">
+            <select
               value={selectedElectionId}
-              onChange={setSelectedElectionId}
-              options={elections.map((el) => ({ value: el.id, label: el.name }))}
-              placeholder="Select Election"
-            />
+              onChange={(e) => setSelectedElectionId(e.target.value)}
+              className="appearance-none rounded-lg border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-1.5 pr-8 text-sm text-zinc-700 dark:text-zinc-300 outline-none focus:border-maroon-500 cursor-pointer"
+            >
+              {elections.map((el) => (
+                <option key={el.id} value={el.id}>{el.name}</option>
+              ))}
+            </select>
+            <svg className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
           </div>
         )}
       </div>
@@ -187,47 +192,4 @@ export function ResultsPanel() {
                         <span
                           className={`min-w-0 truncate font-semibold ${
                             isLeader && pos.total > 0
-                              ? "text-gold-400"
-                              : "text-zinc-700 dark:text-zinc-300"
-                          }`}
-                        >
-                          {isLeader && pos.total > 0 && (
-                            <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-white">
-                              1
-                            </span>
-                          )}
-                          {c.candidate_name}
-                          {c.party && (
-                            <span className="ml-2 font-normal text-zinc-600 dark:text-zinc-400">
-                              ({c.party})
-                            </span>
-                          )}
-                        </span>
-                        <span className="tabular-nums text-zinc-500 dark:text-zinc-400 font-medium">
-                          {c.vote_count} ({pct}%)
-                        </span>
-                      </div>
-                      {/* CSS bar chart */}
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <motion.div
-                          className={`h-full rounded-full ${
-                            isLeader && pos.total > 0
-                              ? "bg-gold-500"
-                              : "bg-maroon-600"
-                          }`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.6, ease: "easeOut" }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+                              ? "text-gold

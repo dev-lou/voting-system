@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, type FormEvent } from "react";
 import { supabase } from "../../lib/supabase";
 import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election, Position, Candidate } from "../../lib/types";
+import { addAuditEntry } from "../../utils/auditLog";
+import { CustomSelect } from "../CustomSelect";
 
 type FormData = { full_name: string; party: string; photo_url: string };
 const EMPTY_FORM: FormData = { full_name: "", party: "", photo_url: "" };
@@ -176,6 +178,7 @@ export function CandidatesPanel() {
       if (err) throw new Error(err.message);
       cancelForm();
       await reload();
+      addAuditEntry(adminEmail, editingId ? "Updated candidate" : "Added candidate", form.full_name.trim());
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Save failed.");
     } finally {
@@ -183,7 +186,7 @@ export function CandidatesPanel() {
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, name: string) {
     setSaving(true);
     const { error: err } = await supabase.rpc("admin_delete_candidate", {
       p_admin_email: adminEmail,
@@ -193,35 +196,39 @@ export function CandidatesPanel() {
     setDeleteConfirm(null);
     setSaving(false);
     await reload();
+    addAuditEntry(adminEmail, "Removed candidate", name);
   }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 dark:backdrop-blur-md px-5 py-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Candidates</h2>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Candidates</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Manage candidate profiles and affiliations
+            </p>
+          </div>
           {!loadingElections && (
-            <select
-              value={selectedElectionId}
-              onChange={(e) => setSelectedElectionId(e.target.value)}
-              className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 outline-none focus:border-maroon-500 cursor-pointer"
-            >
-              {elections.map((el) => (
-                <option key={el.id} value={el.id}>{el.name}</option>
-              ))}
-            </select>
+            <div className="w-56 relative z-40">
+              <CustomSelect
+                value={selectedElectionId}
+                onChange={setSelectedElectionId}
+                options={elections.map((el) => ({ value: el.id, label: el.name }))}
+                placeholder="Select Election"
+              />
+            </div>
           )}
           {!loadingPositions && positions.length > 0 && (
-            <select
-              value={selectedPositionId}
-              onChange={(e) => setSelectedPositionId(e.target.value)}
-              className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 outline-none focus:border-maroon-500 cursor-pointer"
-            >
-              {positions.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+            <div className="w-48 relative z-40">
+              <CustomSelect
+                value={selectedPositionId}
+                onChange={setSelectedPositionId}
+                options={positions.map((p) => ({ value: p.id, label: p.title }))}
+                placeholder="Select Position"
+              />
+            </div>
           )}
         </div>
         <button
@@ -245,44 +252,56 @@ export function CandidatesPanel() {
             <p className="p-5 text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
           )}
           {!loadingCandidates && !loadingPositions && candidates.length === 0 && selectedPositionId && (
-            <p className="p-5 text-sm text-zinc-500 dark:text-zinc-400">No candidates for this position.</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-zinc-800">
+                <svg className="h-7 w-7 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                </svg>
+              </div>
+              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                No candidates yet
+              </p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Create your first candidate to get started.
+              </p>
+            </div>
           )}
           {candidates.length > 0 && (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Photo</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Party</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
+                <tr className="border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-900/50 dark:backdrop-blur-md shadow-sm">
+                  <th className="px-6 pt-4 pb-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Photo</th>
+                  <th className="px-6 pt-4 pb-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
+                  <th className="px-6 pt-4 pb-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Party</th>
+                  <th className="px-6 pt-4 pb-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {candidates.map((c) => (
-                  <tr key={c.id} className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-900">
-                    <td className="px-5 py-3">
+                   <tr key={c.id} className="border-b border-zinc-100 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors duration-200 cursor-pointer">
+                    <td className="px-6 py-4">
                       <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                         {c.photo_url ? (
                           <img src={c.photo_url} alt={c.full_name} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-400 dark:text-zinc-500">
+                          <div className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
                             {c.full_name.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase()}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{c.full_name}</td>
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{c.party ?? "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <button type="button" onClick={() => startEdit(c)} className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-maroon-600 cursor-pointer">Edit</button>
+                    <td className="px-6 py-4 font-medium text-zinc-900 dark:text-zinc-100">{c.full_name}</td>
+                    <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{c.party ?? "—"}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button type="button" onClick={() => startEdit(c)} className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-maroon-300 hover:bg-maroon-50 hover:text-maroon-700 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-maroon-700 dark:hover:bg-maroon-900/20 dark:hover:text-maroon-400 cursor-pointer transition-colors duration-200">Edit</button>
                         {deleteConfirm === c.id ? (
-                          <span className="flex items-center gap-2">
-                            <button type="button" onClick={() => handleDelete(c.id)} disabled={saving} className="text-sm text-red-600 hover:text-red-700 cursor-pointer">Confirm</button>
-                            <button type="button" onClick={() => setDeleteConfirm(null)} className="text-sm text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 cursor-pointer">Cancel</button>
+                          <span className="flex items-center gap-1.5">
+                            <button type="button" onClick={() => handleDelete(c.id, c.full_name)} disabled={saving} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 cursor-pointer">Confirm</button>
+                            <button type="button" onClick={() => setDeleteConfirm(null)} className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer">Cancel</button>
                           </span>
                         ) : (
-                          <button type="button" onClick={() => setDeleteConfirm(c.id)} className="text-sm text-zinc-400 dark:text-zinc-500 hover:text-red-600 cursor-pointer">Delete</button>
+                          <button type="button" onClick={() => setDeleteConfirm(c.id)} className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-400 cursor-pointer transition-colors duration-200">Delete</button>
                         )}
                       </div>
                     </td>
@@ -295,7 +314,7 @@ export function CandidatesPanel() {
 
         {/* Form sidebar */}
         {showForm && (
-          <div className="w-80 shrink-0 overflow-y-auto border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+          <div className="w-80 shrink-0 overflow-y-auto border-l border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 dark:backdrop-blur-md p-5">
             <p className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {editingId ? "Edit Candidate" : "New Candidate"}
             </p>
@@ -306,7 +325,7 @@ export function CandidatesPanel() {
                   Candidate Photo
                 </label>
                 <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-zinc-900">
                     {form.photo_url ? (
                       <img src={form.photo_url} alt="Preview" className="h-full w-full object-cover" />
                     ) : (
@@ -338,7 +357,7 @@ export function CandidatesPanel() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
-                      className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-900 disabled:opacity-50 cursor-pointer"
+                      className="rounded-lg border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-900 disabled:opacity-50 cursor-pointer"
                     >
                       {form.photo_url ? "Change Photo" : "Upload Photo"}
                     </button>
@@ -354,7 +373,7 @@ export function CandidatesPanel() {
                   value={form.full_name} 
                   onChange={(e) => setForm({ ...form, full_name: e.target.value })} 
                   required 
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-maroon-500" 
+                  className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500" 
                   placeholder="Juan dela Cruz" 
                 />
               </div>
@@ -364,7 +383,7 @@ export function CandidatesPanel() {
                   type="text" 
                   value={form.party} 
                   onChange={(e) => setForm({ ...form, party: e.target.value })} 
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-maroon-500" 
+                  className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500" 
                   placeholder="e.g. Unity Party" 
                 />
               </div>
@@ -380,7 +399,7 @@ export function CandidatesPanel() {
                 <button 
                   type="button" 
                   onClick={cancelForm} 
-                  className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-900 cursor-pointer"
+                  className="rounded-lg border border-zinc-300 dark:border-white/10 px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-900 cursor-pointer"
                 >
                   Cancel
                 </button>
