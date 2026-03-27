@@ -32,7 +32,13 @@ export interface Candidate {
 export interface Student {
   id: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
+  gender?: string;
+  year_section?: string;
+  voter_id?: string;
   email: string | null;
+  confirmation_code?: string;
   has_voted: boolean;
   created_at: string;
 }

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 
 interface OfflineOverlayProps {
   isOnline: boolean;
@@ -36,19 +37,10 @@ export function OfflineOverlay({ isOnline }: OfflineOverlayProps) {
                 transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                 className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]"
               >
-                <svg
+                <AlertTriangle
                   className="h-10 w-10 text-red-500 dark:text-red-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
                   strokeWidth={1.5}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                  />
-                </svg>
+                />
               </motion.div>
             </div>
 

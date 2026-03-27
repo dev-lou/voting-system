@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Check } from "lucide-react";
+
+const MotionChevronDown = motion(ChevronDown);
 
 export interface SelectOption {
   value: string;
@@ -90,17 +93,13 @@ export function CustomSelect({
         <span className={selected ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"}>
           {selected ? selected.label : placeholder}
         </span>
-        <motion.svg
+        <MotionChevronDown
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500"
-          fill="none"
-          viewBox="0 0 24 24"
+          className="shrink-0 text-zinc-400 dark:text-zinc-500"
+          size={16}
           strokeWidth={2}
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </motion.svg>
+        />
       </button>
 
       {/* Dropdown Panel */}
@@ -139,9 +138,7 @@ export function CustomSelect({
                   >
                     {/* Check icon for selected */}
                     <span className={`flex h-4 w-4 shrink-0 items-center justify-center ${isSelected ? "opacity-100" : "opacity-0"}`}>
-                      <svg className="h-3.5 w-3.5 text-maroon-600 dark:text-maroon-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                      </svg>
+                      <Check className="h-3.5 w-3.5 text-maroon-600 dark:text-maroon-400" strokeWidth={2.5} />
                     </span>
                     {opt.label}
                   </li>

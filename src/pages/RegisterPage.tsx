@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { useSystemClock } from "../hooks/useSystemClock";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { Check, User } from "lucide-react";
 
 interface RegisterPageProps {
   onGoToLogin: () => void;
@@ -91,15 +92,10 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
             /* Success state */
             <div className="text-center">
               <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/30">
-                <svg
+                <Check
                   className="h-6 w-6 text-green-600 dark:text-green-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
                   strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
+                />
               </div>
               <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                 Registration Complete
@@ -120,19 +116,10 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
               {/* Header */}
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
-                  <svg
+                  <User
                     className="h-6 w-6 text-maroon-700 dark:text-maroon-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
                     strokeWidth={1.5}
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                    />
-                  </svg>
+                  />
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                   Voter Registration

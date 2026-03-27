@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 interface CustomDateTimePickerProps {
   value: string; // ISO string like "YYYY-MM-DDThh:mm"
@@ -155,15 +156,11 @@ export function CustomDateTimePicker({
         <span className={value ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"}>
           {getDisplayText() || placeholder}
         </span>
-        <svg
-          className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
+        <Calendar
+          className={`shrink-0 text-zinc-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          size={20}
           strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12v-.008zM9 15h.008v.008H9v-.008zm-3 0h.008v.008H6v-.008z" />
-        </svg>
+        />
       </button>
 
       {/* Popover */}
@@ -189,9 +186,7 @@ export function CustomDateTimePicker({
                 onClick={() => changeMonth(-1)}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
+                <ChevronLeft size={16} strokeWidth={2.5} />
               </button>
               <div className="text-sm font-bold tracking-wide text-zinc-900 dark:text-zinc-100">
                 {MONTHS[month]} {year}
@@ -201,9 +196,7 @@ export function CustomDateTimePicker({
                 onClick={() => changeMonth(1)}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
+                <ChevronRight size={16} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -229,8 +222,8 @@ export function CustomDateTimePicker({
                     onClick={() => handleDayClick(d)}
                     className={`
                       mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors
-                      ${active 
-                        ? "bg-maroon-600 text-white shadow-[0_0_12px_rgba(244,63,110,0.5)]" 
+                      ${active
+                        ? "bg-maroon-600 text-white shadow-[0_0_12px_rgba(244,63,110,0.5)]"
                         : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                       }
                     `}
@@ -246,9 +239,7 @@ export function CustomDateTimePicker({
 
             {/* Time Selector */}
             <div className="flex items-center justify-center gap-2 px-2 pb-1">
-              <svg className="mr-2 h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-              </svg>
+              <Clock className="mr-2 text-zinc-400" size={16} strokeWidth={2} />
               {/* Hour Box */}
               <div className="relative group">
                 <input

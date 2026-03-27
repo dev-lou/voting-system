@@ -4,6 +4,7 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomDateTimePicker } from "../CustomDateTimePicker";
+import { Calendar } from "lucide-react";
 
 type FormData = {
   name: string;
@@ -32,6 +33,7 @@ export function ElectionsPanel() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [toggleConfirm, setToggleConfirm] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const adminEmail = sessionStorage.getItem(ADMIN_SESSION_KEY) ?? "";
@@ -80,6 +82,10 @@ export function ElectionsPanel() {
     e.preventDefault();
     setFormError(null);
     if (!form.name.trim()) { setFormError("Name is required."); return; }
+    if (form.starts_at && form.ends_at && new Date(form.ends_at) <= new Date(form.starts_at)) {
+      setFormError("End date must be after start date.");
+      return;
+    }
     setSaving(true);
 
     try {
@@ -153,7 +159,16 @@ export function ElectionsPanel() {
         {/* Table */}
         <div className="flex-1 overflow-y-auto">
           {loading && (
-            <p className="p-5 text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
+            <div className="p-5 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-4 animate-pulse">
+                  <div className="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-6 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                </div>
+              ))}
+            </div>
           )}
           {error && (
             <div className="m-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -163,9 +178,7 @@ export function ElectionsPanel() {
           {!loading && elections.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-zinc-800">
-                <svg className="h-7 w-7 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                </svg>
+                <Calendar className="h-7 w-7 text-zinc-400" />
               </div>
               <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 No elections yet
@@ -200,18 +213,42 @@ export function ElectionsPanel() {
                       {el.ends_at ? new Date(el.ends_at).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(el)}
-                        disabled={saving}
-                        className={`rounded-full px-3 py-1 text-xs font-semibold cursor-pointer transition-colors duration-200 ${
-                          el.is_active
-                            ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/20 cursor-pointer"
-                            : "rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
-                        }`}
-                      >
-                        {el.is_active ? "Active" : "Inactive"}
-                      </button>
+                      {toggleConfirm === el.id ? (
+                        <span className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => { setToggleConfirm(null); handleToggleActive(el); }}
+                            disabled={saving}
+                            className={`rounded-lg px-2.5 py-1 text-xs font-semibold cursor-pointer ${
+                              el.is_active
+                                ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400"
+                                : "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400"
+                            }`}
+                          >
+                            {el.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setToggleConfirm(null)}
+                            className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setToggleConfirm(el.id)}
+                          disabled={saving}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold cursor-pointer transition-colors duration-200 ${
+                            el.is_active
+                              ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/20 cursor-pointer"
+                              : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+                          }`}
+                        >
+                          {el.is_active ? "Active" : "Inactive"}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center gap-1.5 justify-end">
@@ -271,7 +308,7 @@ export function ElectionsPanel() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/30"
                   placeholder="e.g. SY 2025-2026 Election"
                 />
               </Field>
@@ -305,14 +342,14 @@ export function ElectionsPanel() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-lg bg-maroon-700 py-2.5 text-sm font-semibold text-white hover:bg-maroon-800 disabled:opacity-50 cursor-pointer"
+                  className="rounded-lg bg-maroon-700 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-maroon-800 hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? "Saving..." : "Save"}
                 </button>
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="rounded-lg border border-zinc-300 dark:border-white/10 px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-900 cursor-pointer"
+                  className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
                 >
                   Cancel
                 </button>

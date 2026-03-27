@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useBallotStore } from "../stores/ballotStore";
 import { sounds } from "../utils/sounds";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, AlertTriangle, Check, Loader2, SendHorizontal } from "lucide-react";
 import type { PositionWithCandidates } from "../lib/types";
 
 interface ReviewModalProps {
@@ -26,6 +27,7 @@ export function ReviewModal({
   const showReview = useBallotStore((s) => s.showReview);
   const setShowReview = useBallotStore((s) => s.setShowReview);
   const getSelections = useBallotStore((s) => s.getSelections);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const totalSelections = positions.reduce(
     (sum, pos) => sum + getSelections(pos.id).size,
@@ -50,12 +52,18 @@ export function ReviewModal({
   }, [showReview, setShowReview]);
 
   const handleClose = () => {
+    if (isSubmitting) return;
     sounds.playClick();
+    setShowConfirm(false);
     setShowReview(false);
   };
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSubmit = () => {
     sounds.playSubmit();
     onSubmit();
   };
@@ -123,9 +131,7 @@ export function ReviewModal({
                 aria-label="Close review modal"
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-white/50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-300 transition-all hover:bg-white hover:text-maroon-600 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm border border-white/40 dark:border-white/10"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
+                <X className="h-5 w-5" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -140,9 +146,7 @@ export function ReviewModal({
                 >
                   <div className="bg-gradient-to-r from-amber-500/20 to-amber-500/5 border-b border-amber-500/20 px-8 py-4 backdrop-blur-md flex items-start gap-4">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                      </svg>
+                      <AlertTriangle className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-bold text-amber-700 dark:text-amber-400">Missing Selections</h4>
@@ -193,9 +197,7 @@ export function ReviewModal({
                               className="flex items-center gap-4 rounded-xl border border-white/40 bg-white/60 px-4 py-3 shadow-sm dark:border-white/10 dark:bg-zinc-800/60 backdrop-blur-md transition-transform hover:scale-[1.02]"
                             >
                               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-maroon-500 to-maroon-700 text-white shadow-md">
-                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
+                                <Check className="h-4 w-4" strokeWidth={3} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <span className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
@@ -213,7 +215,7 @@ export function ReviewModal({
                       ) : isAbstained ? (
                         <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white/30 px-6 py-6 dark:border-zinc-700 dark:bg-zinc-900/30">
                           <p className="text-sm font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                            Abstained by Choice
+                            Skipped
                           </p>
                         </div>
                       ) : (
@@ -265,23 +267,66 @@ export function ReviewModal({
                   
                   {isSubmitting ? (
                     <>
-                      <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
+                      <Loader2 className="h-5 w-5 animate-spin" />
                       Submitting...
                     </>
                   ) : (
                     <>
                       Submit Final Ballot
-                      <svg className="h-5 w-5 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                      </svg>
+                      <SendHorizontal className="h-5 w-5 ml-1 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
                     </>
                   )}
                 </button>
               </div>
             </div>
+
+            {/* ─── Double-Confirmation Overlay ─── */}
+            <AnimatePresence>
+              {showConfirm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                  onClick={() => setShowConfirm(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mx-4 w-full max-w-sm rounded-2xl border border-white/30 bg-white p-8 shadow-2xl dark:border-white/10 dark:bg-zinc-900"
+                  >
+                    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-maroon-500 to-maroon-700 shadow-lg glow-maroon">
+                      <AlertTriangle className="h-7 w-7 text-white" strokeWidth={2} />
+                    </div>
+                    <h4 className="text-center text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                      Are you sure?
+                    </h4>
+                    <p className="mt-2 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                      This action cannot be undone. Your ballot will be submitted and recorded permanently.
+                    </p>
+                    <div className="mt-6 flex flex-col gap-2">
+                      <button
+                        onClick={handleConfirmSubmit}
+                        disabled={isSubmitting}
+                        className="w-full rounded-xl bg-gradient-to-r from-maroon-600 to-maroon-500 py-3.5 text-sm font-extrabold text-white shadow-lg hover:from-maroon-500 hover:to-maroon-400 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                      >
+                        {isSubmitting ? "Submitting..." : "Confirm Submit"}
+                      </button>
+                      <button
+                        onClick={() => setShowConfirm(false)}
+                        disabled={isSubmitting}
+                        className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3.5 text-sm font-bold text-zinc-600 hover:bg-zinc-100 transition-all cursor-pointer disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       )}

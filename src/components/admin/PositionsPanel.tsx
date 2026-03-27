@@ -4,6 +4,7 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election, Position } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
+import { List } from "lucide-react";
 
 type FormData = { title: string; max_votes: string; display_order: string };
 const EMPTY_FORM: FormData = { title: "", max_votes: "1", display_order: "1" };
@@ -188,14 +189,20 @@ export function PositionsPanel() {
         {/* Table */}
         <div className="flex-1 overflow-y-auto">
           {loadingPositions && (
-            <p className="p-5 text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
+            <div className="p-5 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-4 animate-pulse">
+                  <div className="h-4 w-10 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-5 w-8 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                </div>
+              ))}
+            </div>
           )}
           {!loadingPositions && positions.length === 0 && selectedElectionId && (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-zinc-800">
-                <svg className="h-7 w-7 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                </svg>
+                <List className="h-7 w-7 text-zinc-400" />
               </div>
               <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 No positions yet
@@ -247,29 +254,29 @@ export function PositionsPanel() {
 
         {/* Form sidebar */}
         {showForm && (
-          <div className="w-64 shrink-0 overflow-y-auto border-l border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 dark:backdrop-blur-md p-5">
+          <div className="w-80 shrink-0 overflow-y-auto border-l border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 dark:backdrop-blur-md p-5">
             <p className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {editingId ? "Edit Position" : "New Position"}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Title</label>
-                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500" placeholder="e.g. President" />
+                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/30" placeholder="e.g. President" />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Max Votes</label>
-                <input type="number" min={1} value={form.max_votes} onChange={(e) => setForm({ ...form, max_votes: e.target.value })} required className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500" placeholder="e.g. 1" />
+                <input type="number" min={1} value={form.max_votes} onChange={(e) => setForm({ ...form, max_votes: e.target.value })} required className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/30" placeholder="e.g. 1" />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Display Order</label>
-                <input type="number" min={1} value={form.display_order} onChange={(e) => setForm({ ...form, display_order: e.target.value })} required className="w-full rounded-xl border border-white/40 bg-white/60 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500" placeholder="e.g. 1" />
+                <input type="number" min={1} value={form.display_order} onChange={(e) => setForm({ ...form, display_order: e.target.value })} required className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/30" placeholder="e.g. 1" />
               </div>
               {formError && <p className="text-sm text-red-600">{formError}</p>}
               <div className="flex gap-2 pt-2">
-                <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-maroon-700 py-2.5 text-sm font-semibold text-white hover:bg-maroon-800 disabled:opacity-50 cursor-pointer">
+                <button type="submit" disabled={saving} className="rounded-lg bg-maroon-700 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-maroon-800 hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer">
                   {saving ? "Saving..." : "Save"}
                 </button>
-                <button type="button" onClick={cancelForm} className="rounded-lg border border-zinc-300 dark:border-white/10 px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-900 cursor-pointer">Cancel</button>
+                <button type="button" onClick={cancelForm} className="rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer">Cancel</button>
               </div>
             </form>
           </div>

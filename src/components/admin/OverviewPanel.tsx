@@ -14,27 +14,28 @@ export function OverviewPanel() {
   const [loading, setLoading] = useState(true);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [votersRes, votedRes, electionRes] = await Promise.all([
-          supabase.from("students").select("id", { count: "exact", head: true }),
-          supabase.from("students").select("id", { count: "exact", head: true }).eq("has_voted", true),
-          supabase.from("elections").select("*").eq("is_active", true).maybeSingle(),
-        ]);
+  async function load() {
+    setLoading(true);
+    try {
+      const [votersRes, votedRes, electionRes] = await Promise.all([
+        supabase.from("students").select("id", { count: "exact", head: true }),
+        supabase.from("students").select("id", { count: "exact", head: true }).eq("has_voted", true),
+        supabase.from("elections").select("*").eq("is_active", true).maybeSingle(),
+      ]);
 
-        setStats({
-          totalVoters: votersRes.count ?? 0,
-          votesCast: votedRes.count ?? 0,
-          activeElection: electionRes.data,
-        });
-      } catch {
-        // Silent fail
-      } finally {
-        setLoading(false);
-      }
+      setStats({
+        totalVoters: votersRes.count ?? 0,
+        votesCast: votedRes.count ?? 0,
+        activeElection: electionRes.data,
+      });
+    } catch {
+      // Silent fail
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     load();
     setAuditLog(getAuditLog());
   }, []);
@@ -65,10 +66,21 @@ export function OverviewPanel() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto p-8">
-        <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Monitor voting activity and system status
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Monitor voting activity and system status
+            </p>
+          </div>
+          <button
+            onClick={() => { load(); setAuditLog(getAuditLog()); }}
+            disabled={loading}
+            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 cursor-pointer dark:border-white/10 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
 
         {/* Stats */}
         <div className="mb-6 mt-6 grid grid-cols-3 gap-6">

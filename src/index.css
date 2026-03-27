@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Wire dark: variant to data-theme attribute ─── */
@@ -7,7 +7,8 @@
 /* ─── 2026 Desktop Premium Voting System ─── */
 
 @theme {
-  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* Brand - more vibrant neon-like maroon for dark mode accents */
   --color-maroon-50: #fff3f5;
@@ -73,11 +74,28 @@ body,
   outline-offset: 4px;
 }
 
-/* High performance transitions for everything except transforms (handled by framer) */
-* {
+/* Targeted transitions (not global * selector) for performance */
+body,
+button,
+input,
+select,
+textarea,
+a,
+[role="button"] {
   transition-property: color, background-color, border-color, box-shadow;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 input,

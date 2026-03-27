@@ -166,9 +166,16 @@ export function ResultsPanel() {
                 <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">
                   {pos.position_title}
                 </p>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {pos.total} vote{pos.total !== 1 ? "s" : ""} cast
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {pos.total} vote{pos.total !== 1 ? "s" : ""} cast
+                  </span>
+                  {votesCast > 0 && (
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      {Math.max(0, votesCast - pos.total)} abstained
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3">

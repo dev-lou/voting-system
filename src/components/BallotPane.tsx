@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Minus, ChevronLeft, Check, ArrowRight } from "lucide-react";
 import { useBallotStore } from "../stores/ballotStore";
 import { CandidateCard } from "./CandidateCard";
 import { sounds } from "../utils/sounds";
@@ -56,6 +57,7 @@ export function BallotPane({
   const isLast = activeIndex === positions.length - 1;
   const candidateCount = position.candidates.length;
   const isAbstained = (abstainedPositions?.has(position.id) ?? false) && getSelectionCount(position.id) === 0;
+  const currentSelections = getSelectionCount(position.id);
 
   const handlePrevious = () => {
     if (!isFirst) {
@@ -107,7 +109,7 @@ export function BallotPane({
                 <div className="flex items-center gap-2 mt-1">
                   <div className="h-px w-8 bg-maroon-500"></div>
                   <span className="text-sm font-semibold uppercase tracking-widest text-maroon-600 dark:text-maroon-400">
-                    Select up to {position.max_votes}
+                    {currentSelections} / {position.max_votes} selected
                   </span>
                 </div>
               </div>
@@ -131,10 +133,8 @@ export function BallotPane({
                       : "glass-panel text-zinc-600 hover:text-maroon-600 hover:border-maroon-500/30 hover:glow-maroon dark:text-zinc-300 dark:hover:text-white"
                   }`}
                 >
-                  <svg className={`h-4 w-4 transition-transform group-hover:scale-110 ${isAbstained ? 'text-zinc-500' : 'text-current'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                  {isAbstained ? "Abstaining" : "Abstain"}
+                  <Minus className={`h-4 w-4 transition-transform group-hover:scale-110 ${isAbstained ? 'text-zinc-500' : 'text-current'}`} strokeWidth={2.5} />
+                  {isAbstained ? "Skipping" : "Skip"}
                 </button>
               </div>
             </div>
@@ -168,9 +168,7 @@ export function BallotPane({
 
         {candidateCount === 0 && (
           <div className="flex flex-col items-center justify-center py-32 text-zinc-400 dark:text-zinc-600">
-            <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Minus className="w-16 h-16 mb-4 opacity-50" strokeWidth={1} />
             <p className="text-lg font-medium tracking-tight">No candidates for this position</p>
           </div>
         )}
@@ -198,9 +196,7 @@ export function BallotPane({
               }
             `}
           >
-            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-            </svg>
+            <ChevronLeft className="h-4 w-4 mr-2" strokeWidth={2.5} />
             Back
           </button>
 
@@ -231,9 +227,7 @@ export function BallotPane({
               `}
             >
               Review
-              <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
+              <Check className="h-4 w-4 ml-2" strokeWidth={2.5} />
             </button>
           ) : (
             <button
@@ -250,9 +244,7 @@ export function BallotPane({
               `}
             >
               Next
-              <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-              </svg>
+              <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2.5} />
             </button>
           )}
         </motion.div>

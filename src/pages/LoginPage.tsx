@@ -5,6 +5,7 @@ import { useSystemClock } from "../hooks/useSystemClock";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { ADMIN_SESSION_KEY, STUDENT_SESSION_KEY } from "../App";
 import type { Student } from "../lib/types";
+import { X, Minus, Check, Lock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 const LOCKOUT_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 30000;
@@ -30,6 +31,7 @@ interface LoginPageProps {
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -80,8 +82,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       }
 
       const { data: studentData, error: studentRpcErr } = await supabase.rpc(
-        "student_login",
-        { p_email: id.toLowerCase(), p_password: password }
+        "voter_login",
+        { p_voter_id: id.toLowerCase(), p_password: password }
       );
 
       if (studentRpcErr) {
@@ -140,17 +142,30 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       <div className="pointer-events-none absolute bottom-[-15%] right-[-5%] h-[50vw] w-[50vw] rounded-full bg-gold-400/8 blur-[140px] dark:bg-indigo-600/10 mix-blend-multiply dark:mix-blend-screen" />
 
       {/* ─── Title Bar ─── */}
-      <div className="relative z-30 flex h-12 shrink-0 items-center justify-between glass-panel rounded-none border-t-0 border-x-0 border-b-white/50 px-5 text-sm dark:border-b-white/5">
-        <div className="flex items-center gap-3">
+      <div className="relative z-30 flex h-12 shrink-0 items-center justify-between glass-panel rounded-none border-t-0 border-x-0 border-b-white/50 px-5 text-sm dark:border-b-white/5 [-webkit-app-region:drag]">
+        <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
           <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-maroon-500 to-maroon-700 text-[10px] font-bold text-white shadow-md glow-maroon">
             V
           </div>
           <span className="font-bold tracking-wider text-zinc-900 dark:text-zinc-50">VOTE 2026</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
           <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 font-medium">{time}</span>
           <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
           <ThemeToggle />
+          <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+          {/* Window controls */}
+          <div className="group flex items-center gap-1.5 ml-1">
+            <button aria-label="Close" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-red-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm cursor-pointer">
+              <X className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+            </button>
+            <button aria-label="Minimize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-yellow-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm cursor-pointer">
+              <Minus className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+            </button>
+            <button aria-label="Maximize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-green-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm cursor-pointer">
+              <Check className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -170,9 +185,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
               className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-maroon-500 to-maroon-700 shadow-xl glow-maroon border border-white/20"
             >
-              <svg className="h-10 w-10 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-              </svg>
+              <Lock className="h-10 w-10 text-white drop-shadow-lg" strokeWidth={1.5} />
             </motion.div>
           </div>
 
@@ -185,9 +198,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             </p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <div className="h-px w-6 bg-maroon-500/50"></div>
-              <svg className="h-3.5 w-3.5 text-maroon-500 dark:text-maroon-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-              </svg>
+              <ShieldCheck className="h-3.5 w-3.5 text-maroon-500 dark:text-maroon-400" strokeWidth={2} />
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-maroon-500 dark:text-maroon-400">Secured Terminal</span>
               <div className="h-px w-6 bg-maroon-500/50"></div>
             </div>
@@ -195,7 +206,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="identifier" className="mb-2.5 block text-sm font-bold text-zinc-700 dark:text-zinc-300">Email</label>
+              <label htmlFor="identifier" className="mb-2.5 block text-sm font-bold text-zinc-700 dark:text-zinc-300">Voter ID</label>
               <input
                 id="identifier"
                 type="text"
@@ -203,27 +214,32 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
                 disabled={loading || isLockedOut}
-                autoComplete="email"
+                autoComplete="off"
                 className="w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20"
-                placeholder="you@university.edu"
+                placeholder="e.g. IT-001"
                 aria-describedby="identifier-error"
               />
             </div>
 
             <div>
               <label htmlFor="password" className="mb-2.5 block text-sm font-bold text-zinc-700 dark:text-zinc-300">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading || isLockedOut}
-                autoComplete="current-password"
-                className="w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20"
-                placeholder="Enter password"
-                aria-describedby="password-error"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading || isLockedOut}
+                  autoComplete="current-password"
+                  className="w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 pr-12 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20"
+                  placeholder="Enter password"
+                  aria-describedby="password-error"
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer">
+                  {showPassword ? <EyeOff className="h-5 w-5" strokeWidth={1.5} /> : <Eye className="h-5 w-5" strokeWidth={1.5} />}
+                </button>
+              </div>
             </div>
 
             {isLockedOut && (

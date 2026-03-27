@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useBallotStore } from "../stores/ballotStore";
 import { sounds } from "../utils/sounds";
+import { Check } from "lucide-react";
 import type { Candidate } from "../lib/types";
 
 interface CandidateCardProps {
@@ -66,24 +67,16 @@ export function CandidateCard({
     >
       {/* ─── Premium Selection Indicator ─── */}
       {isSelected && (
-        <motion.div 
+        <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-maroon-500 to-maroon-700 shadow-lg glow-maroon border border-white/20"
         >
-          <motion.svg
+          <Check
             className="h-4 w-4 text-white drop-shadow-md"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
             strokeWidth={3}
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-          </motion.svg>
+          />
         </motion.div>
       )}
 
@@ -91,7 +84,7 @@ export function CandidateCard({
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-zinc-100/50 dark:bg-zinc-800/50">
         {/* Inner shadow overlay for depth */}
         <div className="absolute inset-0 shadow-[inset_0_-20px_40px_-20px_rgba(0,0,0,0.2)] z-10 pointer-events-none" />
-        
+
         {hasPhoto ? (
           <motion.img
             src={candidate.photo_url!}

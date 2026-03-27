@@ -6,6 +6,7 @@ import { ReviewModal } from "./ReviewModal";
 import { ThemeToggle } from "./ThemeToggle";
 import { useBallotStore } from "../stores/ballotStore";
 import { sounds } from "../utils/sounds";
+import { Minus, Check, X } from "lucide-react";
 import type { PositionWithCandidates } from "../lib/types";
 
 interface VotingLayoutProps {
@@ -95,13 +96,13 @@ export function VotingLayout({
             {/* macOS-style window controls - Premium Hover */}
             <div className="group flex items-center gap-2 ml-1">
               <button aria-label="Minimize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-yellow-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
-                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+                <Minus className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
               </button>
               <button aria-label="Maximize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-green-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
-                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                <Check className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
               </button>
               <button aria-label="Close" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-red-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
-                <svg className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <X className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
               </button>
             </div>
           </div>
@@ -150,15 +151,11 @@ export function VotingLayout({
                       <div className="shrink-0 flex items-center justify-end w-5">
                         {isComplete ? (
                           <div className={`flex h-5 w-5 items-center justify-center rounded-full shadow-inner ${isActive ? 'bg-maroon-600 text-white dark:bg-maroon-500 shadow-[0_0_10px_var(--color-maroon-500)]' : 'bg-maroon-100 text-maroon-600 dark:bg-maroon-900/40 dark:text-maroon-400'}`}>
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                            </svg>
+                            <Check className="h-3 w-3" strokeWidth={3} />
                           </div>
                         ) : isAbstained ? (
                           <div className={`flex h-5 w-5 items-center justify-center rounded-full ${isActive ? 'bg-zinc-400 text-white dark:bg-zinc-500 shadow-[0_0_10px_var(--color-zinc-400)]' : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'}`}>
-                            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                            </svg>
+                            <Minus className="h-2.5 w-2.5" strokeWidth={3} />
                           </div>
                         ) : (
                           <div className={`h-2 w-2 rounded-full transition-colors ${isActive ? 'bg-gold-400 shadow-[0_0_8px_var(--color-gold-400)]' : 'bg-zinc-300 dark:bg-zinc-700'}`} />
