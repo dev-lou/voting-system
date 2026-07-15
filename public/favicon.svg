@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="4" fill="#800020"/>
-  <path d="M9 16l4 4 10-10" stroke="#DAA520" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M420 140L230 380L100 250" stroke="url(#primaryGradient)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <defs>
+    <linearGradient id="primaryGradient" x1="100" y1="140" x2="420" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FB7185"/> <!-- Rose 400 -->
+      <stop offset="0.5" stop-color="#E11D48"/> <!-- Rose 600 -->
+      <stop offset="1" stop-color="#9F1239"/> <!-- Rose 800 -->
+    </linearGradient>
+    <filter id="glow" x="40" y="80" width="440" height="360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#E11D48" flood-opacity="0.6"/>
+    </filter>
+  </defs>
 </svg>
