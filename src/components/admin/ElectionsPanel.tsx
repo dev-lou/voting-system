@@ -5,6 +5,7 @@ import type { Election } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomDateTimePicker } from "../CustomDateTimePicker";
 import { Calendar } from "lucide-react";
+import { toast } from "sonner";
 
 type FormData = {
   name: string;
@@ -99,10 +100,12 @@ export function ElectionsPanel() {
       });
       if (err) throw new Error(err.message);
 
+      toast.success(editingId ? "Election updated successfully" : "Election created successfully");
       cancelForm();
       await load();
       addAuditEntry(adminEmail, editingId ? "Updated election" : "Created election", form.name.trim());
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed.");
       setFormError(err instanceof Error ? err.message : "Save failed.");
     } finally {
       setSaving(false);
@@ -115,7 +118,12 @@ export function ElectionsPanel() {
       p_admin_email: adminEmail,
       p_id: id,
     });
-    if (err) setError(err.message);
+    if (err) {
+      toast.error(err.message);
+      setError(err.message);
+    } else {
+      toast.success("Election deleted successfully");
+    }
     setDeleteConfirm(null);
     setSaving(false);
     await load();
@@ -128,7 +136,12 @@ export function ElectionsPanel() {
       p_admin_email: adminEmail,
       p_id: election.id,
     });
-    if (err) setError(err.message);
+    if (err) {
+      toast.error(err.message);
+      setError(err.message);
+    } else {
+      toast.success(`Election ${election.is_active ? 'deactivated' : 'activated'} successfully`);
+    }
     setSaving(false);
     await load();
     addAuditEntry(adminEmail, election.is_active ? "Deactivated election" : "Activated election", election.name);

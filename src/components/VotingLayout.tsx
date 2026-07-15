@@ -4,6 +4,7 @@ import { NetworkBadge } from "./NetworkBadge";
 import { OfflineOverlay } from "./OfflineOverlay";
 import { ReviewModal } from "./ReviewModal";
 import { ThemeToggle } from "./ThemeToggle";
+import { InstallPrompt } from "./InstallPrompt";
 import { useBallotStore } from "../stores/ballotStore";
 import { sounds } from "../utils/sounds";
 import { Minus, Check, X } from "lucide-react";
@@ -47,6 +48,9 @@ export function VotingLayout({
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 font-sans selection:bg-maroon-500/30">
+      {/* ─── Premium Grid Background ─── */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+
       {/* ─── Ambient Background Orbs ─── */}
       <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[40vw] w-[40vw] rounded-full bg-maroon-400/10 blur-[120px] dark:bg-maroon-600/20 mix-blend-multiply dark:mix-blend-screen" />
       <div className="pointer-events-none absolute -bottom-[10%] -right-[5%] h-[50vw] w-[50vw] rounded-full bg-gold-400/10 blur-[150px] dark:bg-maroon-900/30 mix-blend-multiply dark:mix-blend-screen" />
@@ -57,14 +61,9 @@ export function VotingLayout({
         <header className="relative z-30 flex h-12 shrink-0 items-center justify-between glass-panel rounded-none border-t-0 border-x-0 border-b-white/50 px-5 text-sm dark:border-b-white/5 [-webkit-app-region:drag]">
           {/* Left: Branding + Clock */}
           <div className="flex items-center gap-4 [-webkit-app-region:no-drag]">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-maroon-500 to-maroon-700 text-[10px] font-bold text-white shadow-md glow-maroon">
-                V
-              </div>
-              <span className="font-bold tracking-wider text-zinc-900 dark:text-zinc-50">
-                VOTE 2026
-              </span>
-            </div>
+            <span className="font-extrabold tracking-widest text-zinc-900 dark:text-zinc-50">
+              VOTE 2026
+            </span>
             <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
             <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 font-medium">
               {time}
@@ -91,6 +90,8 @@ export function VotingLayout({
             )}
             <NetworkBadge isOnline={isOnline} />
             <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+            <InstallPrompt />
+            <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
             <ThemeToggle />
             <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
             {/* macOS-style window controls - Premium Hover */}
@@ -98,7 +99,17 @@ export function VotingLayout({
               <button aria-label="Minimize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-yellow-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
                 <Minus className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
               </button>
-              <button aria-label="Maximize" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-green-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">
+              <button 
+                onClick={() => {
+                  if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                  } else if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                  }
+                }}
+                aria-label="Maximize / Fullscreen" 
+                className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-green-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm cursor-pointer"
+              >
                 <Check className="h-2 w-2 text-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
               </button>
               <button aria-label="Close" className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-300 hover:bg-red-500 dark:bg-zinc-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-500 shadow-sm">

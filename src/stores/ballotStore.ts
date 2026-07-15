@@ -1,6 +1,42 @@
 import { create } from "zustand";
 import type { BallotSelection } from "../lib/types";
 
+const OFFLINE_KEY = "offline-ballot";
+
+/**
+ * Save ballot selections to localStorage for offline resilience.
+ * If the student closes the browser and returns, their selections persist.
+ */
+function persistToLocalStorage(state: BallotState) {
+  try {
+    const data: Record<string, string[]> = {};
+    state.selections.forEach((set, positionId) => {
+      data[positionId] = Array.from(set);
+    });
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(data));
+  } catch {
+    // Storage full or unavailable — silently fail
+  }
+}
+
+/**
+ * Restore ballot selections from localStorage on page load.
+ */
+function restoreFromLocalStorage(): Map<string, Set<string>> {
+  try {
+    const raw = localStorage.getItem(OFFLINE_KEY);
+    if (!raw) return new Map();
+    const data = JSON.parse(raw) as Record<string, string[]>;
+    const map = new Map<string, Set<string>>();
+    for (const [positionId, ids] of Object.entries(data)) {
+      map.set(positionId, new Set(ids));
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 interface BallotState {
   /** Map of position_id -> Set of selected candidate_ids */
   selections: Map<string, Set<string>>;
@@ -10,6 +46,12 @@ interface BallotState {
 
   /** Whether the review modal is open */
   showReview: boolean;
+
+  /** Voter's password (in-memory only, cleared on reset) — used for submit_ballot auth */
+  voterPassword: string;
+
+  /** Store the voter's password in memory for ballot submission */
+  setVoterPassword: (password: string) => void;
 
   /** Toggle a candidate selection for a position, respecting max_votes */
   toggleCandidate: (
@@ -44,9 +86,14 @@ interface BallotState {
 }
 
 export const useBallotStore = create<BallotState>((set, get) => ({
-  selections: new Map(),
+  selections: restoreFromLocalStorage(),
   activePositionIndex: 0,
   showReview: false,
+  voterPassword: "",
+
+  setVoterPassword: (password) => {
+    set({ voterPassword: password });
+  },
 
   toggleCandidate: (positionId, candidateId, maxVotes) => {
     set((state) => {
@@ -65,6 +112,8 @@ export const useBallotStore = create<BallotState>((set, get) => ({
       next.set(positionId, current);
       return { selections: next };
     });
+    // Persist to localStorage for offline resilience
+    persistToLocalStorage(get());
   },
 
   getSelections: (positionId) => {
@@ -100,10 +149,16 @@ export const useBallotStore = create<BallotState>((set, get) => ({
   },
 
   reset: () => {
+    try {
+      localStorage.removeItem(OFFLINE_KEY);
+    } catch {
+      // Silently fail
+    }
     set({
       selections: new Map(),
       activePositionIndex: 0,
       showReview: false,
+      voterPassword: "",
     });
   },
 }));

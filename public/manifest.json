@@ -1,16 +1,32 @@
 {
-  "name": "Secure Voting System",
-  "short_name": "VoteSecure",
-  "description": "Kiosk-mode student government voting system",
+  "name": "VOTE 2026 — Student Council Election",
+  "short_name": "VOTE 2026",
+  "description": "Student Government Election Voting System — cast your ballot securely",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#020617",
   "theme_color": "#800020",
+  "orientation": "any",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "196x196",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
 }

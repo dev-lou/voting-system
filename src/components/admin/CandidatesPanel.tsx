@@ -4,7 +4,8 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election, Position, Candidate } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
-import { Users, Camera, Loader2 } from "lucide-react";
+import { Users, Camera, Loader2, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 type FormData = { full_name: string; party: string; photo_url: string };
 const EMPTY_FORM: FormData = { full_name: "", party: "", photo_url: "" };
@@ -156,6 +157,7 @@ export function CandidatesPanel() {
 
       setForm({ ...form, photo_url: urlData.publicUrl });
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
       setFormError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploadingPhoto(false);
@@ -177,10 +179,13 @@ export function CandidatesPanel() {
         p_photo_url: form.photo_url || null,
       });
       if (err) throw new Error(err.message);
+      
+      toast.success(editingId ? "Candidate updated successfully" : "Candidate created successfully");
       cancelForm();
       await reload();
       addAuditEntry(adminEmail, editingId ? "Updated candidate" : "Added candidate", form.full_name.trim());
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed.");
       setFormError(err instanceof Error ? err.message : "Save failed.");
     } finally {
       setSaving(false);
@@ -193,7 +198,12 @@ export function CandidatesPanel() {
       p_admin_email: adminEmail,
       p_id: id,
     });
-    if (err) setError(err.message);
+    if (err) {
+      toast.error(err.message);
+      setError(err.message);
+    } else {
+      toast.success("Candidate deleted successfully");
+    }
     setDeleteConfirm(null);
     setSaving(false);
     await reload();

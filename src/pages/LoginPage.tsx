@@ -1,64 +1,30 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { useSystemClock } from "../hooks/useSystemClock";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { InstallPrompt } from "../components/InstallPrompt";
 import { ADMIN_SESSION_KEY, STUDENT_SESSION_KEY } from "../App";
+import { useBallotStore } from "../stores/ballotStore";
 import type { Student } from "../lib/types";
 import { X, Minus, Check, Lock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
-const LOCKOUT_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 30000;
-const ATTEMPTS_KEY = "login-attempts";
-
-function loadAttempts(): { count: number; lockedUntil: number } {
-  try {
-    const raw = sessionStorage.getItem(ATTEMPTS_KEY);
-    return raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0 };
-  } catch {
-    return { count: 0, lockedUntil: 0 };
-  }
-}
-
-function saveAttempts(count: number, lockedUntil: number) {
-  sessionStorage.setItem(ATTEMPTS_KEY, JSON.stringify({ count, lockedUntil }));
-}
-
 interface LoginPageProps {
   onAuthenticated: (role: "admin" | "voter") => void;
+  onGoToRegister?: () => void;
 }
 
-export function LoginPage({ onAuthenticated }: LoginPageProps) {
+export function LoginPage({ onAuthenticated, onGoToRegister }: LoginPageProps) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+  const setVoterPassword = useBallotStore((s) => s.setVoterPassword);
   const time = useSystemClock();
-
-  useEffect(() => {
-    const { lockedUntil } = loadAttempts();
-    const remaining = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-    if (remaining > 0) {
-      setLockoutSeconds(remaining);
-      const interval = setInterval(() => {
-        const left = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-        setLockoutSeconds(left);
-        if (left <= 0) {
-          clearInterval(interval);
-          saveAttempts(0, 0);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, []);
-
-  const isLockedOut = lockoutSeconds > 0;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (isLockedOut) return;
 
     setError(null);
     setLoading(true);
@@ -75,7 +41,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         const adminRows = adminData as { id: string; email: string }[] | null;
         if (adminRows && adminRows.length > 0) {
           sessionStorage.setItem(ADMIN_SESSION_KEY, adminRows[0].email);
-          sessionStorage.removeItem(ATTEMPTS_KEY);
           onAuthenticated("admin");
           return;
         }
@@ -87,13 +52,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       );
 
       if (studentRpcErr) {
-        handleFailedAttempt();
+        setError("Invalid credentials. Please try again.");
         return;
       }
 
       const studentRows = studentData as Student[] | null;
       if (!studentRows || studentRows.length === 0) {
-        handleFailedAttempt();
+        setError("Invalid credentials. Please try again.");
         return;
       }
 
@@ -104,8 +69,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         return;
       }
 
+      // Store voter session + password (in-memory) for ballot submission auth
       sessionStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify(student));
-      sessionStorage.removeItem(ATTEMPTS_KEY);
+      setVoterPassword(password);
       onAuthenticated("voter");
     } catch {
       setError("An unexpected error occurred.");
@@ -114,45 +80,46 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     }
   }
 
-  function handleFailedAttempt() {
-    const { count } = loadAttempts();
-    const newCount = count + 1;
-    if (newCount >= LOCKOUT_ATTEMPTS) {
-      const lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
-      saveAttempts(newCount, lockedUntil);
-      setLockoutSeconds(LOCKOUT_DURATION_MS / 1000);
-      const interval = setInterval(() => {
-        const left = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-        setLockoutSeconds(left);
-        if (left <= 0) {
-          clearInterval(interval);
-          saveAttempts(0, 0);
-        }
-      }, 1000);
-    } else {
-      saveAttempts(newCount, 0);
-      setError("Invalid credentials. Please try again.");
-    }
-  }
-
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 font-sans selection:bg-maroon-500/30">
-      {/* ─── Ambient Background Orbs ─── */}
-      <div className="pointer-events-none absolute top-[-20%] left-[-10%] h-[60vw] w-[60vw] rounded-full bg-maroon-500/8 blur-[160px] dark:bg-maroon-600/15 mix-blend-multiply dark:mix-blend-screen" />
-      <div className="pointer-events-none absolute bottom-[-15%] right-[-5%] h-[50vw] w-[50vw] rounded-full bg-gold-400/8 blur-[140px] dark:bg-indigo-600/10 mix-blend-multiply dark:mix-blend-screen" />
+    <div 
+      className="relative flex h-screen w-screen flex-col overflow-hidden font-sans selection:bg-maroon-500/30 bg-zinc-50 dark:bg-[#09090b]"
+    >
+      {/* ─── Premium Technical Grid Background ─── */}
+      <div 
+        className="pointer-events-none absolute inset-0 z-0 opacity-40 dark:opacity-20"
+        style={{
+          backgroundImage: `linear-gradient(to right, rgba(128,128,128,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(128,128,128,0.2) 1px, transparent 1px)`,
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, black 30%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, black 30%, transparent 100%)'
+        }}
+      />
+      
+      {/* ─── Elegant Ambient Orbs ─── */}
+      <div className="pointer-events-none absolute top-[-20%] left-[-10%] h-[70vw] w-[70vw] rounded-full bg-maroon-500/10 blur-[120px] mix-blend-multiply dark:bg-maroon-600/20 dark:mix-blend-screen z-0 transition-opacity duration-1000" />
+      <div className="pointer-events-none absolute bottom-[-20%] right-[-10%] h-[60vw] w-[60vw] rounded-full bg-blue-500/10 blur-[120px] mix-blend-multiply dark:bg-blue-600/20 dark:mix-blend-screen z-0 transition-opacity duration-1000" />
+
+      {/* ─── Institutional Watermarks ─── */}
+      <div className="pointer-events-none absolute bottom-10 right-10 z-0 flex items-center gap-6 opacity-90 dark:opacity-80 transition-opacity duration-1000">
+        <div className="flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-2xl ring-4 ring-white/20">
+          <img src="/logo.png" alt="ISUFST" className="h-full w-full object-contain scale-105" />
+        </div>
+        <div className="flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full shadow-2xl ring-4 ring-white/20">
+          <img src="/logo2.png" alt="CICT" className="h-full w-full object-cover" />
+        </div>
+      </div>
 
       {/* ─── Title Bar ─── */}
       <div className="relative z-30 flex h-12 shrink-0 items-center justify-between glass-panel rounded-none border-t-0 border-x-0 border-b-white/50 px-5 text-sm dark:border-b-white/5 [-webkit-app-region:drag]">
         <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-maroon-500 to-maroon-700 text-[10px] font-bold text-white shadow-md glow-maroon">
-            V
-          </div>
-          <span className="font-bold tracking-wider text-zinc-900 dark:text-zinc-50">VOTE 2026</span>
+          <span className="font-extrabold tracking-widest text-zinc-900 dark:text-zinc-50">VOTE 2026</span>
         </div>
         <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
           <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 font-medium">{time}</span>
           <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
           <ThemeToggle />
+          <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+          <InstallPrompt />
           <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
           {/* Window controls */}
           <div className="group flex items-center gap-1.5 ml-1">
@@ -194,7 +161,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               Welcome
             </h1>
             <p className="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              Sign in to vote or manage elections
+              Sign in to vote
             </p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <div className="h-px w-6 bg-maroon-500/50"></div>
@@ -213,7 +180,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
-                disabled={loading || isLockedOut}
+                disabled={loading}
                 autoComplete="off"
                 className="w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20"
                 placeholder="e.g. IT-001"
@@ -230,7 +197,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading || isLockedOut}
+                  disabled={loading}
                   autoComplete="current-password"
                   className="w-full rounded-xl border border-white/40 bg-white/60 px-5 py-3.5 pr-12 text-base text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-4 focus:ring-maroon-500/10 focus:shadow-[0_0_20px_rgba(244,63,110,0.15)] disabled:opacity-50 dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-maroon-500 dark:focus:ring-maroon-500/20"
                   placeholder="Enter password"
@@ -242,18 +209,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               </div>
             </div>
 
-            {isLockedOut && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="rounded-xl border border-amber-300/50 bg-amber-500/10 px-5 py-3.5 text-sm font-semibold text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400 backdrop-blur-md"
-                aria-live="polite"
-              >
-                Too many failed attempts. Try again in {lockoutSeconds}s.
-              </motion.div>
-            )}
-
-            {error && !isLockedOut && (
+            {error && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -266,24 +222,37 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
             <button
               type="submit"
-              disabled={loading || isLockedOut}
-              aria-label={loading ? "Signing in" : isLockedOut ? `Locked, ${lockoutSeconds} seconds remaining` : "Sign in to voting system"}
+              disabled={loading}
+              aria-label={loading ? "Signing in" : "Sign in to voting system"}
               className={`
-                group relative w-full overflow-hidden rounded-xl py-4 text-base font-extrabold transition-all duration-300
-                ${loading || isLockedOut
-                  ? "bg-zinc-200 text-zinc-400 cursor-not-allowed dark:bg-zinc-800 dark:text-zinc-600"
-                  : "bg-gradient-to-r from-maroon-600 to-maroon-500 text-white shadow-lg glow-maroon hover:from-maroon-500 hover:to-maroon-400 hover:scale-[1.02] active:scale-[0.98] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maroon-500"
+                group relative w-full overflow-hidden rounded-xl py-4 text-base font-extrabold transition-all duration-300 bg-gradient-to-r from-maroon-600 to-maroon-500 text-white shadow-lg glow-maroon focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maroon-500
+                ${loading
+                  ? "opacity-75 cursor-wait animate-pulse"
+                  : "hover:from-maroon-500 hover:to-maroon-400 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 }
               `}
             >
               {/* Sweep animation */}
-              {!loading && !isLockedOut && (
+              {!loading && (
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[sweep_1.5s_ease-in-out_infinite]" />
               )}
               <span className="relative z-10">
-                {loading ? "Signing in..." : isLockedOut ? "Locked (" + lockoutSeconds + "s)" : "Sign In"}
+                {loading ? "Signing in..." : "Sign In"}
               </span>
             </button>
+            
+            {onGoToRegister && (
+              <div className="mt-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Don't have a Voter ID?{" "}
+                <button
+                  type="button"
+                  onClick={onGoToRegister}
+                  className="font-bold text-maroon-600 hover:text-maroon-500 dark:text-maroon-400 dark:hover:text-maroon-300 hover:underline underline-offset-2 transition-colors cursor-pointer"
+                >
+                  Register here
+                </button>
+              </div>
+            )}
           </form>
 
           <p className="mt-8 text-center text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">

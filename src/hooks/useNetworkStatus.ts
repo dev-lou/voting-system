@@ -22,7 +22,8 @@ export function useNetworkStatus(pingIntervalMs = 15_000) {
         .limit(1)
         .maybeSingle();
       setIsOnline(error === null || error === undefined ? navigator.onLine : false);
-    } catch {
+    } catch (err) {
+      console.error("Supabase health ping failed:", err);
       setIsOnline(false);
     }
     setLastChecked(new Date());

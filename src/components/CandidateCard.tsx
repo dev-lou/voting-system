@@ -55,16 +55,25 @@ export function CandidateCard({
       }}
       whileHover={!isDisabled ? { scale: 1.03, y: -4 } : undefined}
       whileTap={!isDisabled ? { scale: 0.96 } : undefined}
-      className={`
-        relative flex w-full flex-col overflow-hidden rounded-2xl text-left transition-all duration-300
+      className={`group
+        relative flex w-full max-w-[320px] mx-auto flex-col overflow-hidden rounded-2xl text-left transition-all duration-300
         ${isSelected
           ? "ring-2 ring-inset ring-maroon-500 bg-white/90 shadow-[0_8px_30px_rgb(0,0,0,0.12)] glow-maroon dark:bg-zinc-800/90 dark:ring-maroon-500"
           : isDisabled && !isSelected
             ? "cursor-not-allowed opacity-50 ring-1 ring-inset ring-zinc-200/50 shadow-sm glass-panel grayscale-[50%]"
-            : "cursor-pointer ring-1 ring-inset ring-white/40 bg-white/60 shadow-lg hover:shadow-xl hover:bg-white/80 dark:bg-zinc-900/40 dark:ring-white/10 dark:hover:bg-zinc-800/60 dark:hover:ring-white/20 backdrop-blur-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maroon-500"
+            : "cursor-pointer ring-1 ring-inset ring-zinc-300 bg-white/60 shadow-lg hover:shadow-xl hover:bg-white/80 dark:bg-zinc-900/40 dark:ring-white/20 dark:hover:bg-zinc-800/60 dark:hover:ring-white/30 backdrop-blur-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maroon-500"
         }
       `}
     >
+      {/* ─── Permanent Glossy Reflection ─── */}
+      <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-br from-white/40 via-white/5 to-transparent dark:from-white/10 dark:via-transparent to-transparent opacity-80 mix-blend-overlay" />
+
+      {/* ─── Premium Holographic Shimmer (Idle Wave) ─── */}
+      <div 
+        className="pointer-events-none absolute inset-0 z-20 -translate-x-[150%] bg-gradient-to-r from-transparent via-white/40 dark:via-white/20 to-transparent animate-idle-shimmer"
+        style={{ animationDelay: `${index * 0.15}s` }}
+      />
+
       {/* ─── Premium Selection Indicator ─── */}
       {isSelected && (
         <motion.div
@@ -81,7 +90,7 @@ export function CandidateCard({
       )}
 
       {/* ─── Dynamic Photo Area ─── */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-zinc-100/50 dark:bg-zinc-800/50">
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-2xl bg-zinc-100/50 dark:bg-zinc-800/50">
         {/* Inner shadow overlay for depth */}
         <div className="absolute inset-0 shadow-[inset_0_-20px_40px_-20px_rgba(0,0,0,0.2)] z-10 pointer-events-none" />
 

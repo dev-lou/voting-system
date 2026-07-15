@@ -21,11 +21,31 @@ export function useElection() {
 
       try {
         // 1. Get the active election
+        // First check if there are multiple active elections (shouldn't happen, but guard)
+        const { data: allActive, error: countErr } = await supabase
+          .from("elections")
+          .select("id, name", { count: "exact" })
+          .eq("is_active", true);
+
+        if (countErr) throw countErr;
+
+        if (!allActive || allActive.length === 0) {
+          setError("No active election found.");
+          setLoading(false);
+          return;
+        }
+
+        if (allActive.length > 1) {
+          console.warn(
+            "Multiple active elections detected. Using the first one:",
+            (allActive as { id: string; name: string }[]).map((e) => e.name).join(", ")
+          );
+        }
+
         const { data: electionData, error: electionErr } = await supabase
           .from("elections")
           .select("*")
-          .eq("is_active", true)
-          .limit(1)
+          .eq("id", allActive[0].id)
           .maybeSingle();
 
         if (electionErr) throw electionErr;

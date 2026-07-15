@@ -20,6 +20,7 @@ export function VotingPage({ onLogout }: VotingPageProps) {
   const { isOnline } = useNetworkStatus();
   const buildPayload = useBallotStore((s) => s.buildBallotPayload);
   const setShowReview = useBallotStore((s) => s.setShowReview);
+  const voterPassword = useBallotStore((s) => s.voterPassword);
 
   const studentRaw = sessionStorage.getItem(STUDENT_SESSION_KEY);
   const student: Student | null = studentRaw ? (JSON.parse(studentRaw) as Student) : null;
@@ -75,15 +76,25 @@ export function VotingPage({ onLogout }: VotingPageProps) {
     try {
       const payload = buildPayload(positions.map((p) => p.id));
 
-      const { error: rpcError } = await supabase.rpc("submit_ballot", {
-        p_student_id: student.id,
-        p_election_id: election.id,
-        p_selections: payload,
-      });
+      const { data: confirmationCode, error: rpcError } = await supabase.rpc(
+        "submit_ballot",
+        {
+          p_student_id: student.id,
+          p_election_id: election.id,
+          p_selections: payload,
+          p_password: voterPassword,
+        }
+      );
 
       if (rpcError) {
         if (rpcError.message.includes("ALREADY_VOTED")) {
           setSubmitError("Your ballot has already been recorded.");
+        } else if (rpcError.message.includes("ELECTION_NOT_STARTED")) {
+          setSubmitError("This election has not started yet.");
+        } else if (rpcError.message.includes("ELECTION_ENDED")) {
+          setSubmitError("This election has already ended.");
+        } else if (rpcError.message.includes("INVALID_PASSWORD")) {
+          setSubmitError("Password verification failed. Please log in again.");
         } else {
           setSubmitError(rpcError.message);
         }
@@ -91,17 +102,8 @@ export function VotingPage({ onLogout }: VotingPageProps) {
       }
 
       setSubmitSuccess(true);
-      const code = "IT-" + crypto.randomUUID().slice(0, 4).toUpperCase();
+      const code = (confirmationCode as string) ?? "";
       setConfirmationCode(code);
-
-      // Store confirmation code in database for admin tracking
-      const { error: codeErr } = await supabase
-        .from("students")
-        .update({ confirmation_code: code })
-        .eq("id", student.id);
-      if (codeErr) {
-        console.error("Failed to save confirmation code:", codeErr.message);
-      }
 
       // Auto-download receipt (anonymous — no voter name)
       const votes: string[] = [];

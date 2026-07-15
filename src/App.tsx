@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Toaster } from "sonner";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { VotingPage } from "./pages/VotingPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { useBallotStore } from "./stores/ballotStore";
 import { ThemeProvider } from "./utils/theme.tsx";
+import { isConfigured } from "./lib/supabase";
 import type { Student } from "./lib/types";
 
 export const ADMIN_SESSION_KEY = "admin-email";
@@ -25,13 +28,21 @@ function App() {
     if (raw) {
       try {
         const student: Student = JSON.parse(raw);
-        if (!student.has_voted) {
+        const hasPassword = useBallotStore.getState().voterPassword !== "";
+        
+        // Only allow them to stay on the voting page if they haven't voted AND they have their password in secure memory.
+        // If they refreshed the page, the in-memory password is wiped, so we must force them to log in again for security.
+        if (!student.has_voted && hasPassword) {
           setAppState("voting");
           return;
         }
       } catch {
-        sessionStorage.removeItem(STUDENT_SESSION_KEY);
+        // Fall through to cleanup
       }
+      // If we reach here, either they voted already, or they lost their secure memory (refreshed). 
+      // Force logout for strict security.
+      sessionStorage.removeItem(STUDENT_SESSION_KEY);
+      useBallotStore.getState().reset();
     }
     setAppState("login");
   }, []);
@@ -48,6 +59,32 @@ function App() {
   }, [resetBallot]);
 
   const handleGoToLogin = useCallback(() => setAppState("login"), []);
+
+  // Graceful error if Supabase is not configured
+  if (!isConfigured) {
+    return (
+      <ThemeProvider>
+        <div className="flex h-screen w-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-8">
+          <div className="max-w-md text-center glass-panel rounded-3xl px-10 py-12">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20">
+              <AlertTriangle className="h-8 w-8 text-red-500" strokeWidth={1.5} />
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 mb-3">
+              Configuration Missing
+            </h1>
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              The voting system needs your Supabase project credentials to connect.
+            </p>
+            <div className="mt-6 rounded-xl bg-zinc-100 dark:bg-zinc-800 p-5 text-left font-mono text-xs">
+              <p className="text-zinc-600 dark:text-zinc-400 mb-2">1. Copy <span className="font-bold text-zinc-900 dark:text-zinc-200">.env.example</span> to <span className="font-bold text-zinc-900 dark:text-zinc-200">.env</span></p>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-2">2. Fill in your Supabase URL &amp; anon key</p>
+              <p className="text-zinc-600 dark:text-zinc-400">3. Restart the dev server</p>
+            </div>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   const renderContent = () => {
     if (appState === "loading") {
@@ -68,6 +105,7 @@ function App() {
       return (
         <LoginPage
           onAuthenticated={handleAuthenticated}
+          onGoToRegister={() => setAppState("register")}
         />
       );
     }
@@ -83,7 +121,12 @@ function App() {
     return <VotingPage onLogout={handleLogout} />;
   };
 
-  return <ThemeProvider>{renderContent()}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <Toaster position="bottom-right" richColors theme="system" closeButton />
+      {renderContent()}
+    </ThemeProvider>
+  );
 }
 
 export default App;

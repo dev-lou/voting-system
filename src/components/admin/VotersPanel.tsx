@@ -4,7 +4,8 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Student } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
-import { X, Eye, EyeOff, Users } from "lucide-react";
+import { Search, Upload, Download, Eye, EyeOff, FileText, CheckCircle2, UserX, Plus, X, Users } from "lucide-react";
+import { toast } from "sonner";
 
 export function VotersPanel() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -44,14 +45,14 @@ export function VotersPanel() {
   async function load() {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from("students")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data, error: err } = await supabase.rpc("admin_get_students", {
+      p_admin_email: adminEmail,
+    });
     if (err) setError(err.message);
     else {
-      setStudents(data ?? []);
-      setFiltered(data ?? []);
+      const studentsData = (data as Student[] | null) ?? [];
+      setStudents(studentsData);
+      setFiltered(studentsData);
     }
     setLoading(false);
   }
@@ -94,7 +95,12 @@ export function VotersPanel() {
       p_admin_email: adminEmail,
       p_student_id: id,
     });
-    if (err) setError(err.message);
+    if (err) {
+      toast.error(err.message);
+      setError(err.message);
+    } else {
+      toast.success("Voter progress reset successfully");
+    }
     await load();
     addAuditEntry(adminEmail, "Reset vote for", name);
   }
@@ -127,14 +133,17 @@ export function VotersPanel() {
         } else {
           setEditError(err.message);
         }
+        toast.error("Failed to update voter");
         return;
       }
 
+      toast.success("Voter updated successfully");
       setShowEdit(false);
       setEditingVoter(null);
       await load();
       addAuditEntry(adminEmail, "Edited voter", `${editFirstName.trim()} ${editLastName.trim()} (${editVoterId.trim()})`);
     } catch {
+      toast.error("An error occurred.");
       setEditError("An error occurred.");
     } finally {
       setEditSaving(false);
@@ -166,15 +175,18 @@ export function VotersPanel() {
         } else {
           setAddError(rpcError.message);
         }
+        toast.error("Failed to add voter");
         return;
       }
 
+      toast.success("Voter added successfully");
       setNewFirstName(""); setNewLastName(""); setNewGender("Male");
       setNewYearSection(""); setNewVoterId(""); setNewPassword("");
       setShowAdd(false);
       await load();
       addAuditEntry(adminEmail, "Added voter", `${newFirstName.trim()} ${newLastName.trim()} (${newVoterId.trim()})`);
     } catch {
+      toast.error("An error occurred.");
       setAddError("An error occurred.");
     } finally {
       setAdding(false);
@@ -246,9 +258,11 @@ export function VotersPanel() {
       }
 
       setImportResults({ success, duplicates, failed });
+      toast.success(`Import complete: ${success} added, ${duplicates} duplicates, ${failed} failed`);
       await load();
       addAuditEntry(adminEmail, "CSV import", `${success} added, ${duplicates} duplicates, ${failed} failed`);
     } catch {
+      toast.error("Failed to read CSV file.");
       setImportError("Failed to read CSV file.");
     } finally {
       setImporting(false);
@@ -301,7 +315,7 @@ export function VotersPanel() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by voter ID, name, or code..."
-            className="w-64 rounded-xl border border-white/40 bg-white/60 px-4 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none backdrop-blur-md transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/10 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="w-[340px] rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2 text-sm text-zinc-900 placeholder-zinc-500 outline-none transition-all duration-300 focus:border-maroon-500 focus:ring-2 focus:ring-maroon-500/20 focus:shadow-[0_0_12px_rgba(244,63,110,0.1)] dark:border-white/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder-zinc-400"
           />
           <div className="w-40 relative z-40">
             <CustomSelect

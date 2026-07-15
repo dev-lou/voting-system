@@ -7,6 +7,7 @@ import { PositionsPanel } from "../../components/admin/PositionsPanel";
 import { CandidatesPanel } from "../../components/admin/CandidatesPanel";
 import { VotersPanel } from "../../components/admin/VotersPanel";
 import { ResultsPanel } from "../../components/admin/ResultsPanel";
+import { AuditLogPanel } from "../../components/admin/AuditLogPanel";
 import { ADMIN_SESSION_KEY } from "../../App";
 
 interface AdminDashboardProps {
@@ -28,12 +29,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   function renderPanel() {
     switch (activeSection) {
-      case "overview":   return <OverviewPanel />;
+      case "overview":   return <OverviewPanel onGoToAudit={() => setActiveSection("audit")} />;
       case "elections":  return <ElectionsPanel />;
       case "positions":  return <PositionsPanel />;
       case "candidates": return <CandidatesPanel />;
       case "voters":     return <VotersPanel />;
       case "results":    return <ResultsPanel />;
+      case "audit":      return <AuditLogPanel />;
     }
   }
 

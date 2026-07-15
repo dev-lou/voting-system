@@ -10,18 +10,18 @@
   --font-sans: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  /* Brand - more vibrant neon-like maroon for dark mode accents */
-  --color-maroon-50: #fff3f5;
-  --color-maroon-100: #ffe4eb;
-  --color-maroon-200: #fecdd8;
-  --color-maroon-300: #fda4bb;
-  --color-maroon-400: #fb7195;
-  --color-maroon-500: #f43f6e; /* More vibrant rose/maroon */
-  --color-maroon-600: #e11d53;
-  --color-maroon-700: #be1242;
-  --color-maroon-800: #9f123c;
-  --color-maroon-900: #881335;
-  --color-maroon-950: #4c051a;
+  /* Brand - ISUFST Blue (Mapped to maroon variables for seamless integration) */
+  --color-maroon-50: #eff6ff;
+  --color-maroon-100: #dbeafe;
+  --color-maroon-200: #bfdbfe;
+  --color-maroon-300: #93c5fd;
+  --color-maroon-400: #60a5fa;
+  --color-maroon-500: #3b82f6; /* ISUFST Blue */
+  --color-maroon-600: #2563eb;
+  --color-maroon-700: #1d4ed8;
+  --color-maroon-800: #1e40af;
+  --color-maroon-900: #1e3a8a;
+  --color-maroon-950: #172554;
 
   --color-gold-300: #fceea7;
   --color-gold-400: #fadd6f;
@@ -107,7 +107,7 @@ textarea {
 
 /* ─── 2026 Custom Utilities ─── */
 .glass-panel {
-  @apply bg-white/60 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+  @apply bg-white/85 dark:bg-zinc-900/85 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
 }
 
 .glass-pill {
@@ -152,6 +152,35 @@ textarea {
   100% { transform: translateX(200%); }
 }
 
+/* ─── Idle Shimmer Effect ─── */
+@keyframes idle-shimmer {
+  0%, 75% { transform: translateX(-150%); }
+  85%, 100% { transform: translateX(150%); }
+}
+.animate-idle-shimmer {
+  animation: idle-shimmer 8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── PWA Standalone Mode Styles ─── */
+@media (display-mode: standalone) {
+  /* Add draggable title bar area for desktop PWA */
+  header:first-of-type {
+    -webkit-app-region: drag;
+  }
+
+  /* Prevent text selection on standalone app */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in inputs */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
 /* ─── Scrollbar (webkit) ─── */
 .scrollbar-thin::-webkit-scrollbar {
   width: 5px;
@@ -168,4 +197,29 @@ textarea {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-zinc-500);
+}
+
+/* ─── View Transitions for Dark Mode Toggle ─── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+[data-theme="dark"]::view-transition-old(root) {
+  z-index: 1;
+}
+[data-theme="dark"]::view-transition-new(root) {
+  z-index: 2;
+}
+[data-theme="light"]::view-transition-old(root) {
+  z-index: 2;
+}
+[data-theme="light"]::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* Disable all normal CSS transitions while View Transition is active to prevent flashes */
+.theme-transitioning,
+.theme-transitioning * {
+  transition: none !important;
 }

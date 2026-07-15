@@ -5,6 +5,7 @@ import type { Election, Position } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
 import { List } from "lucide-react";
+import { toast } from "sonner";
 
 type FormData = { title: string; max_votes: string; display_order: string };
 const EMPTY_FORM: FormData = { title: "", max_votes: "1", display_order: "1" };
@@ -124,10 +125,13 @@ export function PositionsPanel() {
         p_display_order: displayOrder,
       });
       if (err) throw new Error(err.message);
+      
+      toast.success(editingId ? "Position updated successfully" : "Position created successfully");
       cancelForm();
       await reload();
       addAuditEntry(adminEmail, editingId ? "Updated position" : "Created position", form.title.trim());
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed.");
       setFormError(err instanceof Error ? err.message : "Save failed.");
     } finally {
       setSaving(false);
@@ -140,7 +144,12 @@ export function PositionsPanel() {
       p_admin_email: adminEmail,
       p_id: id,
     });
-    if (err) setError(err.message);
+    if (err) {
+      toast.error(err.message);
+      setError(err.message);
+    } else {
+      toast.success("Position deleted successfully");
+    }
     setDeleteConfirm(null);
     setSaving(false);
     await reload();

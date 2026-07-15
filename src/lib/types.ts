@@ -67,7 +67,8 @@ export type AdminSection =
   | "positions"
   | "candidates"
   | "voters"
-  | "results";
+  | "results"
+  | "audit";
 
 /** A position with its candidates pre-loaded */
 export interface PositionWithCandidates extends Position {
