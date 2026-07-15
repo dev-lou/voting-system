@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Users, FileText, Activity, MapPin, CalendarX, FileX, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+
+import { Users, FileText, Activity, MapPin, CalendarX, FileX, ArrowUpRight, Clock } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { ADMIN_SESSION_KEY } from "../../App";
-import { getAuditLog, clearAuditLog, type AuditEntry } from "../../utils/auditLog";
+import { getAuditLog, type AuditEntry } from "../../utils/auditLog";
 import type { Election } from "../../lib/types";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -69,9 +69,6 @@ export function OverviewPanel({ onGoToAudit }: { onGoToAudit?: () => void }) {
     setAuditLog(getAuditLog());
   }, []);
 
-  const handleRefreshAudit = () => {
-    setAuditLog(getAuditLog());
-  };
 
   if (loading) {
     return (
@@ -245,7 +242,7 @@ export function OverviewPanel({ onGoToAudit }: { onGoToAudit?: () => void }) {
                     stroke="none"
                     cornerRadius={12}
                   >
-                    {turnoutData.map((entry, index) => (
+                    {turnoutData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} 
                             style={index === 0 && isDark ? { filter: 'drop-shadow(0px 0px 8px rgba(16, 185, 129, 0.4))' } : {}} />
                     ))}

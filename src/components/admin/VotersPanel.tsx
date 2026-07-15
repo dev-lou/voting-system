@@ -4,7 +4,7 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Student } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
-import { Search, Upload, Download, Eye, EyeOff, FileText, CheckCircle2, UserX, Plus, X, Users } from "lucide-react";
+import { Eye, EyeOff, X, Users } from "lucide-react";
 import { toast } from "sonner";
 
 export function VotersPanel() {

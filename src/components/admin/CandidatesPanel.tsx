@@ -4,7 +4,7 @@ import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election, Position, Candidate } from "../../lib/types";
 import { addAuditEntry } from "../../utils/auditLog";
 import { CustomSelect } from "../CustomSelect";
-import { Users, Camera, Loader2, Upload, X } from "lucide-react";
+import { Users, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type FormData = { full_name: string; party: string; photo_url: string };

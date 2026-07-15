@@ -80,7 +80,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         {
           clipPath: isDark ? shrinkPath : expandPath,
           opacity: isDark ? [1, 1, 0] : [1, 1],
-          offset: isDark ? [0, 0.99, 1] : null
+          offset: isDark ? [0, 0.99, 1] : undefined
         },
         {
           duration: 500,

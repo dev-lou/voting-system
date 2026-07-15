@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Download, RefreshCw, Activity, Users } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { ADMIN_SESSION_KEY } from "../../App";
 import type { Election, ResultRow } from "../../lib/types";
@@ -250,7 +250,7 @@ export function ResultsPanel() {
                      stroke="none"
                      cornerRadius={10}
                    >
-                     {turnoutData.map((entry, index) => (
+                     {turnoutData.map((_, index) => (
                        <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} 
                              style={index === 0 && isDark ? { filter: 'drop-shadow(0px 0px 8px rgba(16, 185, 129, 0.4))' } : {}} />
                      ))}
