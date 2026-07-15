@@ -99,12 +99,43 @@ export function LoginPage({ onAuthenticated, onGoToRegister }: LoginPageProps) {
       <div className="pointer-events-none absolute top-[-20%] left-[-10%] h-[70vw] w-[70vw] rounded-full bg-maroon-500/10 blur-[120px] mix-blend-multiply dark:bg-maroon-600/20 dark:mix-blend-screen z-0 transition-opacity duration-1000" />
       <div className="pointer-events-none absolute bottom-[-20%] right-[-10%] h-[60vw] w-[60vw] rounded-full bg-blue-500/10 blur-[120px] mix-blend-multiply dark:bg-blue-600/20 dark:mix-blend-screen z-0 transition-opacity duration-1000" />
 
-      {/* ─── Institutional Watermarks ─── */}
+      {/* ─── Institutional Watermarks (3D Coin Flip) ─── */}
+      <style>{`
+        @keyframes coin-flip-y {
+          0% { transform: perspective(800px) rotateY(0deg); }
+          10% { transform: perspective(800px) rotateY(180deg); }
+          20% { transform: perspective(800px) rotateY(360deg); }
+          100% { transform: perspective(800px) rotateY(360deg); }
+        }
+        @keyframes coin-flip-x {
+          0% { transform: perspective(800px) rotateX(0deg); }
+          10% { transform: perspective(800px) rotateX(180deg); }
+          20% { transform: perspective(800px) rotateX(360deg); }
+          100% { transform: perspective(800px) rotateX(360deg); }
+        }
+        .animate-coin-flip-x {
+          animation: coin-flip-x 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          transform-style: preserve-3d;
+          cursor: pointer;
+        }
+        .animate-coin-flip-y-delayed {
+          animation: coin-flip-y 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation-delay: 4s;
+          transform-style: preserve-3d;
+          cursor: pointer;
+        }
+        .animate-coin-flip-x:hover {
+          animation: coin-flip-x 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        .animate-coin-flip-y-delayed:hover {
+          animation: coin-flip-y 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      `}</style>
       <div className="pointer-events-none absolute bottom-10 right-10 z-0 flex items-center gap-6 opacity-90 dark:opacity-80 transition-opacity duration-1000">
-        <div className="flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-2xl ring-4 ring-white/20">
+        <div className="pointer-events-auto animate-coin-flip-x flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-2xl ring-4 ring-white/20 hover:ring-white/40 transition-shadow">
           <img src="/logo.png" alt="ISUFST" className="h-full w-full object-contain scale-105" />
         </div>
-        <div className="flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full shadow-2xl ring-4 ring-white/20">
+        <div className="pointer-events-auto animate-coin-flip-y-delayed flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full shadow-2xl ring-4 ring-white/20 hover:ring-white/40 transition-shadow">
           <img src="/logo2.png" alt="CICT" className="h-full w-full object-cover" />
         </div>
       </div>
